@@ -44,7 +44,7 @@ public class QuizController {
             Quiz quiz2Update = ctx.bodyAsClass(Quiz.class);
 
             if (quizService.updateQuiz(quiz2Update, quizId) != null) {
-                ctx.status(200).json(quiz2Update);
+                ctx.status(200).json(quizService);
             } else {
                 ctx.status(404).json("Quiz not found");
             }

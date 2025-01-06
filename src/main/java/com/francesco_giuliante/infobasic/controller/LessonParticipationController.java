@@ -15,9 +15,11 @@ public class LessonParticipationController {
             ctx.json(lessonParticipationService.getStudentsByLessonId(lessonId));
         });
 
-        app.post("/attendance/register", ctx -> {
-            LessonParticipation lessonParticipation = ctx.bodyAsClass(LessonParticipation.class);
-            lessonParticipationService.registerAttendance(lessonParticipation.getLessonID(), lessonParticipation.getStudentID());
+        app.post("/attendance/register/{lessonID}/{studentID}", ctx -> {
+            int lessonID = Integer.parseInt(ctx.pathParam("lessonID"));
+            int studentID = Integer.parseInt(ctx.pathParam("studentID"));
+
+            lessonParticipationService.registerAttendance(lessonID, studentID);
             ctx.status(201).json("Attendance registered successfully");
         });
 

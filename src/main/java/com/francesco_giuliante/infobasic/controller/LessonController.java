@@ -13,6 +13,10 @@ public class LessonController {
             ctx.json(lessonService.getAllLessons());
         });
 
+        app.get("/today-lessons", ctx -> {
+            ctx.json(lessonService.getAllTodayLessons());
+        });
+
         app.post("/lesson", ctx -> {
             Lesson lesson = ctx.bodyAsClass(Lesson.class);
             lessonService.createLesson(lesson);

@@ -28,4 +28,8 @@ public class LessonService {
     public Lesson updateLesson(Lesson lesson, int id) {
         return lessonDAO.update(lesson, id);
     }
+
+    public List<Lesson> getAllTodayLessons() {
+        return lessonDAO.findAllToday();
+    }
 }

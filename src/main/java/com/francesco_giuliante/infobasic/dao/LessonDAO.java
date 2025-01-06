@@ -4,6 +4,7 @@ import com.francesco_giuliante.infobasic.model.Lesson;
 import com.francesco_giuliante.infobasic.utility.database.DatabaseConnection;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -145,4 +146,45 @@ public class LessonDAO implements GenericDAO<Lesson> {
         }
         return lessonList;
     }
+
+
+    public List<Lesson> findAllToday() {
+        LocalDate today = LocalDate.now();
+        String findAllTodayLessonSQL = "SELECT * FROM public.\"lessons\" WHERE \"date\" = ?";
+
+        List<Lesson> lessonList = new ArrayList<>();
+
+        try (PreparedStatement psFindAllLesson = connection.prepareStatement(findAllTodayLessonSQL)) {
+            psFindAllLesson.setDate(1, java.sql.Date.valueOf(today));
+
+            try (ResultSet rs = psFindAllLesson.executeQuery()) {
+                while (rs.next()) {
+                    Lesson lesson = new Lesson(
+                            rs.getInt("id"),
+                            rs.getInt("professor_id"),
+                            rs.getInt("subject_id"),
+                            rs.getDate("date").toLocalDate(),
+                            rs.getInt("class_id")
+                    );
+
+                    String participationsSQL = "SELECT student_id FROM lesson_participations WHERE lesson_id = ?";
+                    try (PreparedStatement psParticipations = connection.prepareStatement(participationsSQL)) {
+                        psParticipations.setInt(1, rs.getInt("id"));
+                        try (ResultSet participationRS = psParticipations.executeQuery()) {
+                            while (participationRS.next()) {
+                                lesson.getParticipations().add(participationRS.getInt("student_id"));
+                            }
+                        }
+                    }
+
+                    lessonList.add(lesson);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error while finding today's lessons", e);
+        }
+
+        return lessonList;
+    }
+
 }

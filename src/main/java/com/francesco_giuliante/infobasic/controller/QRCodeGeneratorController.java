@@ -8,8 +8,6 @@ import io.javalin.Javalin;
 
 public class QRCodeGeneratorController {
 
-    private final LessonParticipationService lessonParticipationService = new LessonParticipationService();
-
     public void registerRoutes(Javalin app) {
         app.get("/qr-code/generate/{lessonID}", ctx -> {
             int lessonId = Integer.parseInt(ctx.pathParam("lessonID"));

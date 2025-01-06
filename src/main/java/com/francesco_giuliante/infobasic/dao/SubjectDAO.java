@@ -134,7 +134,7 @@ public class SubjectDAO implements GenericDAO<Subject> {
                     psQuizIDs.setInt(1, rs.getInt("id"));
                     try (ResultSet quizRS = psQuizIDs.executeQuery()) {
                         while (quizRS.next()) {
-                            subject.getQuizIDs().add(quizRS.getInt("quiz_id"));
+                            subject.getQuizIDs().add(quizRS.getInt("id"));
                         }
                     }
                 }

@@ -111,7 +111,7 @@ public class CourseDAO implements GenericDAO<Course> {
                         psClassIDs.setInt(1, id);
                         try (ResultSet classRS = psClassIDs.executeQuery()) {
                             while (classRS.next()) {
-                                course.getClassIDs().add(classRS.getInt("class_id"));
+                                course.getClassIDs().add(classRS.getInt("id"));
                             }
                         }
                     }

@@ -52,39 +52,40 @@ public class ProfessorDAO implements GenericDAO<Professor> {
             throw new RuntimeException(e);
         }
     }
+
     @Override
-    public Professor update(Professor professor, int id) {
-        String updateProfessorSQL = "UPDATE public.\"professors\" SET name = ?, last_name = ?, email = ?, biography = ? WHERE id = ?";
+    public Professor update(Professor professor, int userID) {
+        String updateProfessorSQL = "UPDATE public.\"professors\" SET name = ?, last_name = ?, email = ?, biography = ? WHERE user_id = ?";
 
         try (PreparedStatement psUpdateProfessor = connection.prepareStatement(updateProfessorSQL)) {
             psUpdateProfessor.setString(1, professor.getName());
             psUpdateProfessor.setString(2, professor.getLastName());
             psUpdateProfessor.setString(3, professor.getEmail());
             psUpdateProfessor.setString(4, professor.getBiography());
-            psUpdateProfessor.setInt(5, id);
+            psUpdateProfessor.setInt(5, userID);
 
             int rowsAffected = psUpdateProfessor.executeUpdate();
             if (rowsAffected > 0) {
-                String getUserIdSQL = "SELECT user_id FROM public.\"professors\" WHERE id = ?";
+                String getUserIdSQL = "SELECT user_id FROM public.\"professors\" WHERE user_id = ?";
                 try (PreparedStatement psGetUserId = connection.prepareStatement(getUserIdSQL)) {
-                    psGetUserId.setInt(1, id);
+                    psGetUserId.setInt(1, userID);
                     try (ResultSet rs = psGetUserId.executeQuery()) {
                         if (rs.next()) {
-                            professor.setId(id);
-                            professor.setUserId(rs.getInt("user_id"));  // Set user_id
+                            professor.setUserId(rs.getInt("user_id"));
                             return professor;
                         } else {
-                            throw new SQLException("User ID not found for professor ID: " + id);
+                            throw new SQLException("User ID not found for user_id: " + userID);
                         }
                     }
                 }
             } else {
-                throw new SQLException("No professor found with ID: " + id);
+                throw new SQLException("No professor found with user_id: " + userID);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error while updating professor with ID: " + id, e);
+            throw new RuntimeException("Error while updating professor with user_id: " + userID, e);
         }
     }
+
 
     @Override
     public Optional<Professor> findById(int id) {
@@ -129,7 +130,17 @@ public class ProfessorDAO implements GenericDAO<Professor> {
                         psQuestionIDs.setInt(1, id);
                         try (ResultSet questionRS = psQuestionIDs.executeQuery()) {
                             while (questionRS.next()) {
-                                professor.getQuestionIDs().add(questionRS.getInt("question_id"));
+                                professor.getQuestionIDs().add(questionRS.getInt("id"));
+                            }
+                        }
+                    }
+
+                    String ruleIDsSQL = "SELECT id FROM rules WHERE professor_id = ?";
+                    try (PreparedStatement psRuleIDs = connection.prepareStatement(ruleIDsSQL)) {
+                        psRuleIDs.setInt(1, rs.getInt("id"));
+                        try (ResultSet ruleRS = psRuleIDs.executeQuery()) {
+                            while (ruleRS.next()) {
+                                professor.getRuleIDs().add(ruleRS.getInt("id"));
                             }
                         }
                     }
@@ -139,7 +150,7 @@ public class ProfessorDAO implements GenericDAO<Professor> {
                         psQuizIDs.setInt(1, id);
                         try (ResultSet quizRS = psQuizIDs.executeQuery()) {
                             while (quizRS.next()) {
-                                professor.getQuizIDs().add(quizRS.getInt("quiz_id"));
+                                professor.getQuizIDs().add(quizRS.getInt("id"));
                             }
                         }
                     }
@@ -153,6 +164,84 @@ public class ProfessorDAO implements GenericDAO<Professor> {
 
         return Optional.empty();
     }
+
+    public Optional<Professor> findByUserId(int userId) {
+        String findProfessorByUserIdSQL = "SELECT * FROM public.\"professors\" WHERE user_id = ?";
+
+        try (PreparedStatement psFindProfessor = connection.prepareStatement(findProfessorByUserIdSQL)) {
+            psFindProfessor.setInt(1, userId);
+
+            try (ResultSet rs = psFindProfessor.executeQuery()) {
+                if (rs.next()) {
+                    Professor professor = new Professor(
+                            rs.getInt("id"),
+                            rs.getInt("user_id"),
+                            rs.getString("name"),
+                            rs.getString("last_name"),
+                            rs.getString("email"),
+                            rs.getString("biography")
+                    );
+
+                    String classIDsSQL = "SELECT class_id FROM class_professors WHERE professor_id = ?";
+                    try (PreparedStatement psClassIDs = connection.prepareStatement(classIDsSQL)) {
+                        psClassIDs.setInt(1, rs.getInt("id"));
+                        try (ResultSet classRS = psClassIDs.executeQuery()) {
+                            while (classRS.next()) {
+                                professor.getClassIDs().add(classRS.getInt("class_id"));
+                            }
+                        }
+                    }
+
+                    String participationsSQL = "SELECT id FROM lessons WHERE professor_id = ?";
+                    try (PreparedStatement psParticipations = connection.prepareStatement(participationsSQL)) {
+                        psParticipations.setInt(1, rs.getInt("id"));
+                        try (ResultSet participationRS = psParticipations.executeQuery()) {
+                            while (participationRS.next()) {
+                                professor.getParticipations().add(participationRS.getInt("id"));
+                            }
+                        }
+                    }
+
+                    String questionIDsSQL = "SELECT id FROM questions WHERE professor_id = ?";
+                    try (PreparedStatement psQuestionIDs = connection.prepareStatement(questionIDsSQL)) {
+                        psQuestionIDs.setInt(1, userId);
+                        try (ResultSet questionRS = psQuestionIDs.executeQuery()) {
+                            while (questionRS.next()) {
+                                professor.getQuestionIDs().add(questionRS.getInt("id"));
+                            }
+                        }
+                    }
+
+                    String ruleIDsSQL = "SELECT id FROM rules WHERE professor_id = ?";
+                    try (PreparedStatement psRuleIDs = connection.prepareStatement(ruleIDsSQL)) {
+                        psRuleIDs.setInt(1, rs.getInt("id"));
+                        try (ResultSet ruleRS = psRuleIDs.executeQuery()) {
+                            while (ruleRS.next()) {
+                                professor.getRuleIDs().add(ruleRS.getInt("id"));
+                            }
+                        }
+                    }
+
+                    String quizIDsSQL = "SELECT id FROM quizzes WHERE professor_id = ?";
+                    try (PreparedStatement psQuizIDs = connection.prepareStatement(quizIDsSQL)) {
+                        psQuizIDs.setInt(1, rs.getInt("id"));
+                        try (ResultSet quizRS = psQuizIDs.executeQuery()) {
+                            while (quizRS.next()) {
+                                professor.getQuizIDs().add(quizRS.getInt("id"));
+                            }
+                        }
+                    }
+
+                    return Optional.of(professor);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error while finding professor with user_id: " + userId, e);
+        }
+
+        return Optional.empty();
+    }
+
 
     @Override
     public List<Professor> findAll() {
@@ -196,7 +285,17 @@ public class ProfessorDAO implements GenericDAO<Professor> {
                     psQuestionIDs.setInt(1, rs.getInt("id"));
                     try (ResultSet questionRS = psQuestionIDs.executeQuery()) {
                         while (questionRS.next()) {
-                            professor.getQuestionIDs().add(questionRS.getInt("question_id"));
+                            professor.getQuestionIDs().add(questionRS.getInt("id"));
+                        }
+                    }
+                }
+
+                String ruleIDsSQL = "SELECT id FROM rules WHERE professor_id = ?";
+                try (PreparedStatement psRuleIDs = connection.prepareStatement(ruleIDsSQL)) {
+                    psRuleIDs.setInt(1, rs.getInt("id"));
+                    try (ResultSet ruleRS = psRuleIDs.executeQuery()) {
+                        while (ruleRS.next()) {
+                            professor.getRuleIDs().add(ruleRS.getInt("id"));
                         }
                     }
                 }
@@ -206,7 +305,7 @@ public class ProfessorDAO implements GenericDAO<Professor> {
                     psQuizIDs.setInt(1, rs.getInt("id"));
                     try (ResultSet quizRS = psQuizIDs.executeQuery()) {
                         while (quizRS.next()) {
-                            professor.getQuizIDs().add(quizRS.getInt("quiz_id"));
+                            professor.getQuizIDs().add(quizRS.getInt("id"));
                         }
                     }
                 }

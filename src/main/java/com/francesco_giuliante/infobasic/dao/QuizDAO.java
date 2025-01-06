@@ -15,13 +15,13 @@ public class QuizDAO implements GenericDAO<Quiz> {
 
     @Override
     public Quiz save(Quiz quiz) {
-        String sql = "INSERT INTO quizzes (rule_id, professor_id, attempts, average_rating, question_ids_value_x2, question_ids_value_x3) " +
-                "VALUES (?, ?, ?, ?, ?, ?) RETURNING id";
+        String sql = "INSERT INTO quizzes (rule_id, professor_id, attempts, average_rating, question_ids_value_x2, question_ids_value_x3, subject_id) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id";
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, quiz.getRuleID());
             ps.setInt(2, quiz.getProfessorID());
-            ps.setInt(3, quiz.getAttempts());
+            ps.setInt(3, (quiz.getAttempts() != null) ? quiz.getAttempts() : 0);
             ps.setDouble(4, quiz.getAverageRating());
 
             List<Integer> questionsValueX2 = (quiz.getQuestionIDsValueX2() != null) ? quiz.getQuestionIDsValueX2() : new ArrayList<>();
@@ -32,6 +32,7 @@ public class QuizDAO implements GenericDAO<Quiz> {
 
             ps.setArray(5, valueX2Array);
             ps.setArray(6, valueX3Array);
+            ps.setInt(7, quiz.getSubjectID());
 
             ResultSet rs = ps.executeQuery();
 
@@ -44,6 +45,7 @@ public class QuizDAO implements GenericDAO<Quiz> {
             throw new RuntimeException("Error while saving quiz", e);
         }
     }
+
 
     @Override
     public void delete(int id) {
@@ -69,12 +71,13 @@ public class QuizDAO implements GenericDAO<Quiz> {
         if (quiz.getProfessorID() != null) fieldsToUpdate.put("professor_id", quiz.getProfessorID());
         if (quiz.getAttempts() != null) fieldsToUpdate.put("attempts", quiz.getAttempts());
         if (quiz.getAverageRating() != null) fieldsToUpdate.put("average_rating", quiz.getAverageRating());
+
         if (quiz.getQuestionIDsValueX2() != null && !quiz.getQuestionIDsValueX2().isEmpty()) {
             Integer[] x2Array = quiz.getQuestionIDsValueX2().toArray(new Integer[0]);
             try {
                 fieldsToUpdate.put("question_ids_value_x2", connection.createArrayOf("INTEGER", x2Array));
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Error creating array for question_ids_value_x2", e);
             }
         }
 
@@ -83,7 +86,7 @@ public class QuizDAO implements GenericDAO<Quiz> {
             try {
                 fieldsToUpdate.put("question_ids_value_x3", connection.createArrayOf("INTEGER", x3Array));
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Error creating array for question_ids_value_x3", e);
             }
         }
 
@@ -94,36 +97,25 @@ public class QuizDAO implements GenericDAO<Quiz> {
 
         updateQuizSQL.delete(updateQuizSQL.length() - 2, updateQuizSQL.length());
         updateQuizSQL.append(" WHERE id = ?");
-
         parameters.add(id);
 
-        try {
-            connection.setAutoCommit(false);
+        try (PreparedStatement psUpdateQuiz = connection.prepareStatement(updateQuizSQL.toString())) {
+            for (int i = 0; i < parameters.size(); i++) {
+                psUpdateQuiz.setObject(i + 1, parameters.get(i));
+            }
 
-            try (PreparedStatement psUpdateQuiz = connection.prepareStatement(updateQuizSQL.toString())) {
-                for (int i = 0; i < parameters.size(); i++) {
-                    psUpdateQuiz.setObject(i + 1, parameters.get(i));
-                }
-
-                int rowsAffected = psUpdateQuiz.executeUpdate();
-                if (rowsAffected > 0) {
-                    connection.commit();
-
-                    Quiz quizUpdated = findById(id).orElseThrow(() -> new RuntimeException("No quiz found with ID: " + id));
-                    return quizUpdated;
-                } else {
-                    throw new RuntimeException("No quiz found with ID: " + id);
-                }
-            } catch (SQLException e) {
-                connection.rollback();
-                throw new RuntimeException("Error while updating quiz with ID: " + id, e);
-            } finally {
-                connection.setAutoCommit(true);
+            int rowsAffected = psUpdateQuiz.executeUpdate();
+            if (rowsAffected > 0) {
+                Quiz quizUpdated = findById(id).orElseThrow(() -> new RuntimeException("No quiz found with ID: " + id));
+                return quizUpdated;
+            } else {
+                throw new RuntimeException("No quiz found with ID: " + id);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error while starting transaction for quiz update", e);
+            throw new RuntimeException("Error while updating quiz with ID: " + id, e);
         }
     }
+
 
 
 

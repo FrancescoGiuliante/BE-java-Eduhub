@@ -17,6 +17,10 @@ public class StudentService {
         return studentDAO.findById(id);
     }
 
+    public Optional<Student> getStudentByUserId(int userId) {
+        return studentDAO.findByUserId(userId);
+    }
+
     public List<Student> getAllStudents() {
         return studentDAO.findAll();
     }

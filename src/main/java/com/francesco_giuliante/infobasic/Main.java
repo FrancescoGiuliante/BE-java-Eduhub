@@ -17,6 +17,15 @@ public class Main {
         CourseClassController courseClassController = new CourseClassController();
         courseClassController.registerRoutes(app);
 
+        CourseClassProfessorController courseClassProfessorController = new CourseClassProfessorController();
+        courseClassProfessorController.registerRoutes(app);
+
+        CourseClassStudentController courseClassStudentController = new CourseClassStudentController();
+        courseClassStudentController.registerRoutes(app);
+
+        CourseClassSubjectController courseClassSubjectController = new CourseClassSubjectController();
+        courseClassSubjectController.registerRoutes(app);
+
         CourseController courseController = new CourseController();
         courseController.registerRoutes(app);
 
@@ -49,6 +58,9 @@ public class Main {
 
         SubjectController subjectController = new SubjectController();
         subjectController.registerRoutes(app);
+
+        SubjectProfessorController subjectProfessorController = new SubjectProfessorController();
+        subjectProfessorController.registerRoutes(app);
 
         VoteController voteController = new VoteController();
         voteController.registerRoutes(app);

@@ -24,17 +24,22 @@ public class StudentController {
             ctx.json(studentService.getStudentById(studentId).orElse(null));
         });
 
+        app.get("/student/user/{userId}", ctx -> {
+            int studentUserId = Integer.parseInt(ctx.pathParam("userId"));
+            ctx.json(studentService.getStudentByUserId(studentUserId).orElse(null));
+        });
+
         app.delete("/student/{id}", ctx -> {
             int studentId = Integer.parseInt(ctx.pathParam("id"));
             studentService.deleteStudent(studentId);
             ctx.status(200).json("Student deleted");
         });
 
-        app.put("/student/{id}", ctx -> {
-            int studentId = Integer.parseInt(ctx.pathParam("id"));
+        app.put("/student/{userID}", ctx -> {
+            int studentUserId = Integer.parseInt(ctx.pathParam("userID"));
             Student student2Update = ctx.bodyAsClass(Student.class);
 
-            if (studentService.updateStudent(student2Update, studentId) != null) {
+            if (studentService.updateStudent(student2Update, studentUserId) != null) {
                 ctx.status(200).json(student2Update);
             } else {
                 ctx.status(404).json("Student not found");

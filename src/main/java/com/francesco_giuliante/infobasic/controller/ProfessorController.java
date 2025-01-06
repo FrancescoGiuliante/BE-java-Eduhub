@@ -24,6 +24,11 @@ public class ProfessorController {
             ctx.json(professorService.getProfessorById(professorId).orElse(null));
         });
 
+        app.get("/professor/user/{userId}", ctx -> {
+            int professorUserId = Integer.parseInt(ctx.pathParam("userId"));
+            ctx.json(professorService.getProfessorByUserId(professorUserId).orElse(null));
+        });
+
         app.delete("/professor/{id}", ctx -> {
             int professorId = Integer.parseInt(ctx.pathParam("id"));
             professorService.deleteProfessor(professorId);
@@ -31,10 +36,10 @@ public class ProfessorController {
         });
 
         app.put("/professor/{id}", ctx -> {
-            int professorId = Integer.parseInt(ctx.pathParam("id"));
+            int professorUserId = Integer.parseInt(ctx.pathParam("userID"));
             Professor professor2Update = ctx.bodyAsClass(Professor.class);
 
-            if (professorService.updateProfessor(professor2Update, professorId) != null) {
+            if (professorService.updateProfessor(professor2Update, professorUserId) != null) {
                 ctx.status(200).json(professor2Update);
             } else {
                 ctx.status(404).json("Professor not found");
