@@ -36,7 +36,7 @@ public class ProfessorController {
         });
 
         app.put("/professor/{id}", ctx -> {
-            int professorUserId = Integer.parseInt(ctx.pathParam("userID"));
+            int professorUserId = Integer.parseInt(ctx.pathParam("id"));
             Professor professor2Update = ctx.bodyAsClass(Professor.class);
 
             if (professorService.updateProfessor(professor2Update, professorUserId) != null) {

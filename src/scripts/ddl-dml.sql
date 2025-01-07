@@ -1,162 +1,325 @@
--- Table for storing student information
-CREATE TABLE students (
-    id SERIAL PRIMARY KEY,  -- Student ID
-    user_id INT UNIQUE,  -- Reference to User in Node
-    name VARCHAR(255),  -- Student's first name
-    last_name VARCHAR(255),  -- Student's last name
-    email VARCHAR(255)  -- Student's email address
+CREATE TABLE IF NOT EXISTS public.class_professors
+(
+    class_id integer NOT NULL,
+    professor_id integer NOT NULL,
+    CONSTRAINT class_professors_pkey PRIMARY KEY (class_id, professor_id)
 );
 
--- Table for storing professor information
-CREATE TABLE professors (
-    id SERIAL PRIMARY KEY,  -- Professor ID
-    user_id INT UNIQUE,  -- Reference to User in Node
-    name VARCHAR(255),  -- Professor's first name
-    last_name VARCHAR(255),  -- Professor's last name
-    email VARCHAR(255),  -- Professor's email address
-    biography TEXT  -- Professor's biography
+CREATE TABLE IF NOT EXISTS public.class_students
+(
+    class_id integer NOT NULL,
+    student_id integer NOT NULL,
+    CONSTRAINT class_students_pkey PRIMARY KEY (class_id, student_id)
 );
 
--- Table for storing subjects (subjects/courses)
-CREATE TABLE subjects (
-    id SERIAL PRIMARY KEY,  -- Subject ID
-    name VARCHAR(255),  -- Subject name
-    description TEXT  -- Subject description
+CREATE TABLE IF NOT EXISTS public.class_subjects
+(
+    class_id integer NOT NULL,
+    subject_id integer NOT NULL,
+    CONSTRAINT class_subjects_pkey PRIMARY KEY (class_id, subject_id)
 );
 
--- Table for storing course information
-CREATE TABLE courses (
-    id SERIAL PRIMARY KEY,  -- Course ID
-    description TEXT,  -- Course description
-    path VARCHAR(255)  -- Course path (location)
+CREATE TABLE IF NOT EXISTS public.classes
+(
+    id serial NOT NULL,
+    path character varying(255) COLLATE pg_catalog."default",
+    name character varying(255) COLLATE pg_catalog."default",
+    syllabus text COLLATE pg_catalog."default",
+    course_id integer,
+    CONSTRAINT classes_pkey PRIMARY KEY (id)
 );
 
--- Table for storing class information
-CREATE TABLE classes (
-    id SERIAL PRIMARY KEY,  -- Class ID
-    path VARCHAR(255),  -- Path (location)
-    name VARCHAR(255),  -- Class name
-    syllabus TEXT,  -- Class syllabus
-    course_id INT,  -- Reference to the course
-    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE  -- Cascade delete if course is deleted
+CREATE TABLE IF NOT EXISTS public.courses
+(
+    id serial NOT NULL,
+    description text COLLATE pg_catalog."default",
+    path character varying(255) COLLATE pg_catalog."default",
+    CONSTRAINT courses_pkey PRIMARY KEY (id)
 );
 
--- Many-to-many relationship table for students and classes
-CREATE TABLE class_students (
-    class_id INT,
-    student_id INT,
-    PRIMARY KEY (class_id, student_id),  -- Composite primary key for class-student relationship
-    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,  -- Cascade delete if class is deleted
-    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE  -- Cascade delete if student is deleted
+CREATE TABLE IF NOT EXISTS public.lesson_participations
+(
+    lesson_id integer NOT NULL,
+    student_id integer NOT NULL,
+    CONSTRAINT lesson_participations_pkey PRIMARY KEY (lesson_id, student_id)
 );
 
--- Many-to-many relationship table for professors and classes
-CREATE TABLE class_professors (
-    class_id INT,
-    professor_id INT,
-    PRIMARY KEY (class_id, professor_id),  -- Composite primary key for class-professor relationship
-    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,  -- Cascade delete if class is deleted
-    FOREIGN KEY (professor_id) REFERENCES professors(id) ON DELETE CASCADE  -- Cascade delete if professor is deleted
+CREATE TABLE IF NOT EXISTS public.lessons
+(
+    id serial NOT NULL,
+    professor_id integer,
+    subject_id integer,
+    date date,
+    class_id integer,
+    CONSTRAINT lessons_pkey PRIMARY KEY (id)
 );
 
--- Table for storing lesson information
-CREATE TABLE lessons (
-    id SERIAL PRIMARY KEY,  -- Lesson ID
-    professor_id INT,  -- Reference to professor
-    subject_id INT,  -- Reference to subject
-    date DATE,  -- Date of the lesson
-    class_id INT,  -- Reference to class
-    FOREIGN KEY (professor_id) REFERENCES professors(id) ON DELETE CASCADE,  -- Cascade delete if professor is deleted
-    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,  -- Cascade delete if subject is deleted
-    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE  -- Cascade delete if class is deleted
+CREATE TABLE IF NOT EXISTS public.professors
+(
+    id serial NOT NULL,
+    user_id integer,
+    name character varying(255) COLLATE pg_catalog."default",
+    last_name character varying(255) COLLATE pg_catalog."default",
+    email character varying(255) COLLATE pg_catalog."default",
+    biography text COLLATE pg_catalog."default",
+    CONSTRAINT professors_pkey PRIMARY KEY (id),
+    CONSTRAINT unique_user_id_professor UNIQUE (user_id)
 );
 
--- Table for storing lesson participation records
-CREATE TABLE lesson_participations (
-    lesson_id INT,
-    student_id INT,
-    PRIMARY KEY (lesson_id, student_id),  -- Composite primary key for lesson-participation relationship
-    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,  -- Cascade delete if lesson is deleted
-    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE  -- Cascade delete if student is deleted
+CREATE TABLE IF NOT EXISTS public.questions
+(
+    id serial NOT NULL,
+    prompt text COLLATE pg_catalog."default",
+    answers text[] COLLATE pg_catalog."default",
+    correct_answer text COLLATE pg_catalog."default",
+    wrongs integer DEFAULT 0,
+    rights integer DEFAULT 0,
+    professor_id integer,
+    CONSTRAINT questions_pkey PRIMARY KEY (id)
 );
 
--- Table for storing weekly program information
-CREATE TABLE week_program (
-    id SERIAL PRIMARY KEY,  -- Week program ID
-    start_date DATE,  -- Start date of the week
-    end_date DATE,  -- End date of the week
-    class_id INT,  -- Reference to class
-    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE  -- Cascade delete if class is deleted
+CREATE TABLE IF NOT EXISTS public.quiz_questions
+(
+    quiz_id integer NOT NULL,
+    question_id integer NOT NULL,
+    CONSTRAINT quiz_questions_pkey PRIMARY KEY (quiz_id, question_id)
 );
 
--- Table for storing rule information
-CREATE TABLE rules (
-    id SERIAL PRIMARY KEY,  -- Rule ID
-    description TEXT,  -- Description of the rule
-    value_right_answer DOUBLE PRECISION,  -- Value of the right answer
-    value_wrong_answer DOUBLE PRECISION,  -- Value of the wrong answer
-    duration INT  -- Duration in minutes for the quiz
+CREATE TABLE IF NOT EXISTS public.quizzes
+(
+    id serial NOT NULL,
+    subject_id integer,
+    professor_id integer,
+    attempts integer DEFAULT 0,
+    average_rating double precision,
+    rule_id integer,
+    question_ids_value_x2 integer[],
+    question_ids_value_x3 integer[],
+    CONSTRAINT quizzes_pkey PRIMARY KEY (id)
 );
 
--- Table for storing quiz information
-CREATE TABLE quizzes (
-    id SERIAL PRIMARY KEY,  -- Quiz ID
-    rule_id INT,  -- Reference to the rule
-    subject_id INT,  -- Reference to subject
-    professor_id INT,  -- Reference to professor
-    attempts INT,  -- Number of attempts allowed
-    average_rating DOUBLE PRECISION,  -- Average rating of the quiz
-    FOREIGN KEY (rule_id) REFERENCES rules(id) ON DELETE CASCADE,  -- Cascade delete if rule is deleted
-    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,  -- Cascade delete if subject is deleted
-    FOREIGN KEY (professor_id) REFERENCES professors(id) ON DELETE CASCADE  -- Cascade delete if professor is deleted
+CREATE TABLE IF NOT EXISTS public.rules
+(
+    id serial NOT NULL,
+    professor_id integer NOT NULL,
+    value_right_answer numeric NOT NULL,
+    value_wrong_answer numeric NOT NULL,
+    duration integer NOT NULL,
+    CONSTRAINT rules_pkey PRIMARY KEY (id)
 );
 
--- Table for storing question information
-CREATE TABLE questions (
-    id SERIAL PRIMARY KEY,  -- Question ID
-    prompt TEXT,  -- The prompt of the question
-    answers TEXT[],  -- List of possible answers (array)
-    correct_answer INT,  -- Index of the correct answer
-    wrongs INT DEFAULT 0,  -- Number of wrong answers given
-    rights INT DEFAULT 0,  -- Number of correct answers given
-    professor_id INT,  -- Reference to professor
-    FOREIGN KEY (professor_id) REFERENCES professors(id) ON DELETE CASCADE  -- Cascade delete if professor is deleted
+CREATE TABLE IF NOT EXISTS public.students
+(
+    id serial NOT NULL,
+    user_id integer,
+    name character varying(255) COLLATE pg_catalog."default",
+    last_name character varying(255) COLLATE pg_catalog."default",
+    email character varying(255) COLLATE pg_catalog."default",
+    CONSTRAINT students_pkey PRIMARY KEY (id),
+    CONSTRAINT unique_user_id_student UNIQUE (user_id)
 );
 
--- Table for mapping quiz and questions (many-to-many)
-CREATE TABLE quiz_questions (
-    quiz_id INT,
-    question_id INT,
-    PRIMARY KEY (quiz_id, question_id),  -- Composite primary key for quiz-question relationship
-    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,  -- Cascade delete if quiz is deleted
-    FOREIGN KEY (question_id) REFERENCES questions(id)  -- Questions are not deleted if quiz is deleted
+CREATE TABLE IF NOT EXISTS public.subject_professors
+(
+    subject_id integer NOT NULL,
+    professor_id integer NOT NULL,
+    CONSTRAINT subject_professors_pkey PRIMARY KEY (subject_id, professor_id)
 );
 
--- Many-to-many relationship table for subjects and professors
-CREATE TABLE subject_professors (
-    subject_id INT,
-    professor_id INT,
-    PRIMARY KEY (subject_id, professor_id),  -- Composite primary key for subject-professor relationship
-    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE,  -- Cascade delete if subject is deleted
-    FOREIGN KEY (professor_id) REFERENCES professors(id) ON DELETE CASCADE  -- Cascade delete if professor is deleted
+CREATE TABLE IF NOT EXISTS public.subjects
+(
+    id serial NOT NULL,
+    name character varying(255) COLLATE pg_catalog."default",
+    description text COLLATE pg_catalog."default",
+    CONSTRAINT subjects_pkey PRIMARY KEY (id)
 );
 
--- Many-to-many relationship table for classes and subjects
-CREATE TABLE class_subjects (
-    class_id INT,
-    subject_id INT,
-    PRIMARY KEY (class_id, subject_id),  -- Composite primary key for class-subject relationship
-    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,  -- Cascade delete if class is deleted
-    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE  -- Cascade delete if subject is deleted
+CREATE TABLE IF NOT EXISTS public.votes
+(
+    id serial NOT NULL,
+    quiz_id integer,
+    student_id integer,
+    date date,
+    result double precision,
+    CONSTRAINT votes_pkey PRIMARY KEY (id)
 );
 
--- Table for storing student quiz scores
-CREATE TABLE votes (
-    id SERIAL PRIMARY KEY,  -- Vote ID
-    quiz_id INT,  -- Reference to quiz
-    student_id INT,  -- Reference to student
-    date DATE,  -- Date when the vote was made
-    result DOUBLE PRECISION,  -- Result of the vote
-    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,  -- Cascade delete if quiz is deleted
-    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE  -- Cascade delete if student is deleted
+CREATE TABLE IF NOT EXISTS public.week_program
+(
+    id serial NOT NULL,
+    start_date date,
+    end_date date,
+    class_id integer,
+    CONSTRAINT week_program_pkey PRIMARY KEY (id)
 );
+
+ALTER TABLE IF EXISTS public.class_professors
+    ADD CONSTRAINT class_professors_class_id_fkey FOREIGN KEY (class_id)
+    REFERENCES public.classes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.class_professors
+    ADD CONSTRAINT class_professors_professor_id_fkey FOREIGN KEY (professor_id)
+    REFERENCES public.professors (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.class_students
+    ADD CONSTRAINT class_students_class_id_fkey FOREIGN KEY (class_id)
+    REFERENCES public.classes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.class_students
+    ADD CONSTRAINT class_students_student_id_fkey FOREIGN KEY (student_id)
+    REFERENCES public.students (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.class_subjects
+    ADD CONSTRAINT class_subjects_class_id_fkey FOREIGN KEY (class_id)
+    REFERENCES public.classes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.class_subjects
+    ADD CONSTRAINT class_subjects_subject_id_fkey FOREIGN KEY (subject_id)
+    REFERENCES public.subjects (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.classes
+    ADD CONSTRAINT classes_course_id_fkey FOREIGN KEY (course_id)
+    REFERENCES public.courses (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.lesson_participations
+    ADD CONSTRAINT lesson_participations_lesson_id_fkey FOREIGN KEY (lesson_id)
+    REFERENCES public.lessons (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.lesson_participations
+    ADD CONSTRAINT lesson_participations_student_id_fkey FOREIGN KEY (student_id)
+    REFERENCES public.students (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.lessons
+    ADD CONSTRAINT lessons_class_id_fkey FOREIGN KEY (class_id)
+    REFERENCES public.classes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.lessons
+    ADD CONSTRAINT lessons_professor_id_fkey FOREIGN KEY (professor_id)
+    REFERENCES public.professors (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.lessons
+    ADD CONSTRAINT lessons_subject_id_fkey FOREIGN KEY (subject_id)
+    REFERENCES public.subjects (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.questions
+    ADD CONSTRAINT fk_professor_id FOREIGN KEY (professor_id)
+    REFERENCES public.professors (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+
+
+ALTER TABLE IF EXISTS public.quiz_questions
+    ADD CONSTRAINT quiz_questions_question_id_fkey FOREIGN KEY (question_id)
+    REFERENCES public.questions (id) MATCH SIMPLE
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+    NOT VALID;
+CREATE INDEX IF NOT EXISTS "fki_Q"
+    ON public.quiz_questions(question_id);
+
+
+ALTER TABLE IF EXISTS public.quiz_questions
+    ADD CONSTRAINT quiz_questions_quiz_id_fkey FOREIGN KEY (quiz_id)
+    REFERENCES public.quizzes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.quizzes
+    ADD CONSTRAINT quizzes_professor_id_fkey FOREIGN KEY (professor_id)
+    REFERENCES public.professors (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.quizzes
+    ADD CONSTRAINT quizzes_rule_id_fkey FOREIGN KEY (rule_id)
+    REFERENCES public.rules (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE SET NULL;
+
+
+ALTER TABLE IF EXISTS public.quizzes
+    ADD CONSTRAINT quizzes_subject_id_fkey FOREIGN KEY (subject_id)
+    REFERENCES public.subjects (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.rules
+    ADD CONSTRAINT rules_professor_id_fkey FOREIGN KEY (professor_id)
+    REFERENCES public.professors (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.subject_professors
+    ADD CONSTRAINT subject_professors_professor_id_fkey FOREIGN KEY (professor_id)
+    REFERENCES public.professors (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.subject_professors
+    ADD CONSTRAINT subject_professors_subject_id_fkey FOREIGN KEY (subject_id)
+    REFERENCES public.subjects (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.votes
+    ADD CONSTRAINT votes_quiz_id_fkey FOREIGN KEY (quiz_id)
+    REFERENCES public.quizzes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.votes
+    ADD CONSTRAINT votes_student_id_fkey FOREIGN KEY (student_id)
+    REFERENCES public.students (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
+
+ALTER TABLE IF EXISTS public.week_program
+    ADD CONSTRAINT week_program_class_id_fkey FOREIGN KEY (class_id)
+    REFERENCES public.classes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE CASCADE;
+
